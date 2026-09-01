@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
-import '../models/models.dart';
 
 class CaregiverDashboardPage extends StatelessWidget {
   const CaregiverDashboardPage({super.key});

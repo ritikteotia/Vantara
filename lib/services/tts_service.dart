@@ -10,6 +10,8 @@ class TtsService {
   bool _isInitialized = false;
   String _currentLanguage = 'en-US';
 
+  String get currentLanguage => _currentLanguage;
+
   Future<void> init() async {
     if (_isInitialized) return;
     try {

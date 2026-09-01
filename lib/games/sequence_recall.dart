@@ -14,7 +14,7 @@ class SequenceRecallGame extends StatefulWidget {
 class _SequenceRecallGameState extends State<SequenceRecallGame> {
   late int _difficulty;
   List<int> _sequence = [];
-  List<int> _playerInput = [];
+  final List<int> _playerInput = [];
   bool _isPlayingSequence = true;
   int _activeHighlightIndex = -1;
   int _sequenceLength = 3;

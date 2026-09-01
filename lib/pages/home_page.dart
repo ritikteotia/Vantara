@@ -418,8 +418,6 @@ class HomePage extends StatelessWidget {
     Color color,
     Function(BuildContext, Reminder) onTap,
   ) {
-    final ringColor = reminder.isCompleted ? Colors.green : Colors.deepOrange;
-
     return GestureDetector(
       onTap: () => onTap(context, reminder),
       child: Padding(

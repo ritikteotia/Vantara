@@ -15,7 +15,7 @@ class _MemoryMatchGameState extends State<MemoryMatchGame> {
   late int _difficulty;
   late int _gridSize; // Total cards
   List<Map<String, dynamic>> _cards = [];
-  List<int> _selectedIndices = [];
+  final List<int> _selectedIndices = [];
   bool _isMemorizationPhase = true;
   bool _canTap = false;
   int _memorizeSeconds = 5;

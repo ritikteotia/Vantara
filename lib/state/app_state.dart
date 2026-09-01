@@ -7,7 +7,7 @@ import '../services/tts_service.dart';
 class AppState extends ChangeNotifier {
   List<Reminder> _reminders = [];
   List<GameMetric> _gameMetrics = [];
-  Map<String, int> _gameDifficulties = {
+  final Map<String, int> _gameDifficulties = {
     'memory_match': 1,
     'sequence_recall': 1,
     'what_changed': 1,

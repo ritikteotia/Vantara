@@ -13,7 +13,6 @@ class GamesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    final themeColor = const Color(0xFF8D7B68);
 
     // List of games config
     final List<Map<String, dynamic>> gamesList = [

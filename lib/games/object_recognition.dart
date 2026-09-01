@@ -258,7 +258,6 @@ class _ObjectRecognitionGameState extends State<ObjectRecognitionGame> {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    String correctName = _getLocalizedLabel(_targetItem, appState.currentLanguage);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF7F2),
