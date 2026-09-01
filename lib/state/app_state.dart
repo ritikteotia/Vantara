@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 import '../services/tts_service.dart';
+import '../services/adaptive_engine.dart';
+import '../services/ai_service.dart';
 
 class AppState extends ChangeNotifier {
   List<Reminder> _reminders = [];
@@ -231,6 +233,36 @@ class AppState extends ChangeNotifier {
     _tts.speak(promptText);
   }
 
+  // --- AI & Adaptive Engine Integration Helpers ---
+  
+  /// Queries the AI assistant service with context
+  Future<AiAssistantResponse> processAiVoicePrompt(String prompt) async {
+    final avgAcc = _gameMetrics.isEmpty
+        ? 0.5
+        : _gameMetrics.map((m) => m.accuracy).reduce((a, b) => a + b) / _gameMetrics.length;
+
+    final context = PatientContext(
+      userName: 'Amma',
+      language: _currentLanguage,
+      activeReminders: _reminders,
+      gameDifficulties: _gameDifficulties,
+      averageAccuracy: avgAcc,
+    );
+
+    return VantaraAiService().generateResponse(
+      userPrompt: prompt,
+      context: context,
+    );
+  }
+
+  /// Gets recommended next cognitive game from adaptive engine
+  GameRecommendation getGameRecommendation() {
+    return AdaptiveGameEngine().recommendNextGame(
+      history: _gameMetrics,
+      difficulties: _gameDifficulties,
+    );
+  }
+
   // --- Actions ---
 
   Future<void> changeLanguage(String langCode) async {
@@ -284,24 +316,20 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // AI-Based Personalization difficulty adjustment
+  // AI-Based Personalization difficulty adjustment via AdaptiveGameEngine
   void _adjustDifficulty(String gameId) {
-    // Filter history for this game
-    final history = _gameMetrics.where((m) => m.gameId == gameId).toList();
-    if (history.length < 2) return; // Wait for at least 2 sessions to adapt
-
-    // Get last 2 metrics
-    final lastRuns = history.sublist(history.length - 2);
-    double avgAccuracy = lastRuns.map((m) => m.accuracy).reduce((a, b) => a + b) / 2;
-    double avgMistakes = lastRuns.map((m) => m.mistakes.toDouble()).reduce((a, b) => a + b) / 2;
-
     int currentDiff = _gameDifficulties[gameId] ?? 1;
+    final result = AdaptiveGameEngine().evaluateDifficulty(
+      gameId: gameId,
+      currentDifficulty: currentDiff,
+      history: _gameMetrics,
+    );
 
-    if (avgAccuracy >= 0.85 && currentDiff < 5) {
-      _gameDifficulties[gameId] = currentDiff + 1;
+    if (result.trend == DifficultyTrend.increase) {
+      _gameDifficulties[gameId] = result.newDifficulty;
       speakPrompt('game_difficulty_up');
-    } else if ((avgAccuracy < 0.60 || avgMistakes > 2.0) && currentDiff > 1) {
-      _gameDifficulties[gameId] = currentDiff - 1;
+    } else if (result.trend == DifficultyTrend.decrease) {
+      _gameDifficulties[gameId] = result.newDifficulty;
       speakPrompt('game_difficulty_down');
     } else {
       speakPrompt('game_completed_prompt');
