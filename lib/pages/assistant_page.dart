@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
+import '../theme/glass_theme.dart';
+import '../games/memory_match.dart';
 
 class AssistantPage extends StatefulWidget {
   const AssistantPage({super.key});
@@ -10,27 +12,23 @@ class AssistantPage extends StatefulWidget {
   State<AssistantPage> createState() => _AssistantPageState();
 }
 
-class _AssistantPageState extends State<AssistantPage> {
+class _AssistantPageState extends State<AssistantPage>
+    with SingleTickerProviderStateMixin {
   bool _isListening = false;
-  List<Map<String, dynamic>> _messages = [];
-  Timer? _waveTimer;
-  double _waveHeight = 20.0;
+  String _lastResponse = "";
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnim;
 
   @override
   void initState() {
     super.initState();
-    // Pre-populate with first greeting
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final appState = Provider.of<AppState>(context, listen: false);
-      setState(() {
-        _messages = [
-          {
-            'isUser': false,
-            'text': appState.translate('assistant_greeting'),
-          }
-        ];
-      });
-    });
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _pulseAnim = Tween<double>(begin: 1.0, end: 1.14).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
   }
 
   void _onMicTap() {
@@ -40,196 +38,344 @@ class _AssistantPageState extends State<AssistantPage> {
 
     setState(() {
       _isListening = true;
-      _waveHeight = 35.0;
+      _lastResponse = "";
     });
+    _pulseController.repeat(reverse: true);
 
-    // Start wave animation simulation
-    _waveTimer = Timer.periodic(const Duration(milliseconds: 300), (timer) {
-      if (mounted) {
-        setState(() {
-          _waveHeight = _waveHeight == 35.0 ? 15.0 : 40.0;
-        });
-      }
-    });
-
-    // Speak simulated voice response after 2.5 seconds
-    Timer(const Duration(milliseconds: 2500), () {
-      _waveTimer?.cancel();
+    // Simulated voice recognition
+    Timer(const Duration(milliseconds: 2200), () {
       if (!mounted) return;
+      _pulseController.stop();
+      _pulseController.reset();
+
+      final responseText = appState.currentLanguage == 'hi-IN'
+          ? "नमस्ते अम्मा! मैंने आपके लिए मेमोरी मैच गेम की सिफारिश की है। आप कभी भी खेल सकती हैं।"
+          : "Hello Amma! I'm right here. I recommend starting today's Memory Match game to keep your memory sharp.";
 
       setState(() {
         _isListening = false;
-        // User speech simulation
-        _messages.add({
-          'isUser': true,
-          'text': appState.currentLanguage == 'hi-IN' ? "मुझे आज के खेल खेलने हैं" : "I want to play my daily games."
-        });
+        _lastResponse = responseText;
       });
 
-      // Assistant responds
-      Timer(const Duration(milliseconds: 1000), () {
-        if (!mounted) return;
-        String responseText = appState.currentLanguage == 'hi-IN'
-            ? "ज़रूर! खेल टैब पर जाएँ, या यहाँ दबाएँ। मैंने आपके मस्तिष्क को सक्रिय रखने के लिए मेमोरी मैच गेम की सिफारिश की है।"
-            : "Sure! Go to the Games tab, or tap here. I highly recommend playing Memory Match today to keep your brain active.";
-
-        setState(() {
-          _messages.add({
-            'isUser': false,
-            'text': responseText
-          });
-        });
-
-        // Play voice
-        appState.speakPrompt(responseText);
-      });
+      appState.speakPrompt(responseText);
     });
+  }
+
+  void _triggerPrompt(String promptKey) {
+    final appState = Provider.of<AppState>(context, listen: false);
+
+    if (promptKey == 'game') {
+      final msg = appState.currentLanguage == 'hi-IN'
+          ? "मेमोरी मैच गेम शुरू कर रहा हूँ।"
+          : "Starting your Memory Match game now.";
+      setState(() => _lastResponse = msg);
+      appState.speakPrompt(msg);
+      Timer(const Duration(milliseconds: 1200), () {
+        if (mounted) {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const MemoryMatchGame()),
+          );
+        }
+      });
+    } else if (promptKey == 'reminder') {
+      final rem = appState.reminders.firstWhere((r) => !r.isCompleted,
+          orElse: () => appState.reminders.first);
+      final msg = appState.currentLanguage == 'hi-IN'
+          ? "आपका अगला रिमाइंडर ${rem.title} का है, समय ${rem.time}।"
+          : "Your next reminder is ${rem.title} scheduled for ${rem.time}.";
+      setState(() => _lastResponse = msg);
+      appState.speakPrompt(msg);
+    } else if (promptKey == 'plan') {
+      final msg = appState.currentLanguage == 'hi-IN'
+          ? "आज की योजना: 4 रिमाइंडर और 3 दिमागी खेल।"
+          : "Today's plan: You have 4 reminders and 3 cognitive games scheduled.";
+      setState(() => _lastResponse = msg);
+      appState.speakPrompt(msg);
+    }
   }
 
   @override
   void dispose() {
-    _waveTimer?.cancel();
+    _pulseController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    final themeColor = const Color(0xFF8D7B68);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: VantaraColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
+        bottom: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 110),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                appState.translate('assistant'),
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF7D5A50),
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                "Voice-guided navigation and virtual assistant.",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Chat Message Logs
-              Expanded(
-                child: ListView.builder(
-                  reverse: true,
-                  padding: const EdgeInsets.only(bottom: 20),
-                  itemCount: _messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = _messages[_messages.length - 1 - index];
-                    final isUser = msg['isUser'];
-
-                    return Align(
-                      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                        decoration: BoxDecoration(
-                          color: isUser ? themeColor : const Color(0xFFF3EFE0),
-                          borderRadius: BorderRadius.circular(24).copyWith(
-                            bottomLeft: isUser ? const Radius.circular(24) : Radius.zero,
-                            bottomRight: isUser ? Radius.zero : const Radius.circular(24),
-                          ),
-                          border: isUser ? null : Border.all(color: const Color(0xFFE6DED4)),
-                        ),
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 0.75,
-                        ),
-                        child: Text(
-                          msg['text'],
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: isUser ? Colors.white : const Color(0xFF7D5A50),
-                            height: 1.4,
-                          ),
-                        ),
+              // Header
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      appState.translate('assistant'),
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: VantaraColors.textDark,
+                        letterSpacing: -0.5,
                       ),
-                    );
-                  },
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      appState.currentLanguage == 'hi-IN'
+                          ? "मैं आपकी सहायता के लिए यहाँ हूँ"
+                          : "I'm here to help you",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: VantaraColors.textSub,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(height: 24),
 
-              // Listening / Wave Indicator
-              if (_isListening)
-                Center(
-                  child: Column(
+              // Mascot / Soundwave Center Avatar
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Sound wave lines
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        "Listening...",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(5, (index) => AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          width: 8,
-                          height: (index % 2 == 0) ? _waveHeight : _waveHeight * 0.6,
-                          decoration: BoxDecoration(
-                            color: themeColor,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        )),
-                      ),
+                      _buildWaveBar(16),
+                      const SizedBox(width: 4),
+                      _buildWaveBar(28),
+                      const SizedBox(width: 4),
+                      _buildWaveBar(44),
+                      const SizedBox(width: 4),
+                      _buildWaveBar(22),
+                      const SizedBox(width: 140), // Gap for Mascot
+                      _buildWaveBar(22),
+                      const SizedBox(width: 4),
+                      _buildWaveBar(44),
+                      const SizedBox(width: 4),
+                      _buildWaveBar(28),
+                      const SizedBox(width: 4),
+                      _buildWaveBar(16),
                     ],
                   ),
-                ),
-
-              const SizedBox(height: 20),
-
-              // Giant microphone interaction button
-              Center(
-                child: GestureDetector(
-                  onTap: _onMicTap,
-                  child: Container(
-                    padding: const EdgeInsets.all(28),
+                  // Mascot circle (Sprout character)
+                  Container(
+                    width: 130,
+                    height: 130,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: _isListening ? Colors.redAccent.withOpacity(0.15) : themeColor.withOpacity(0.1),
+                      color: const Color(0xFFF3EFE0),
                       border: Border.all(
-                        color: _isListening ? Colors.redAccent : themeColor,
-                        width: 4,
+                        color: VantaraColors.primaryGreen.withValues(alpha: 0.25),
+                        width: 2.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(
+                            Icons.eco_rounded,
+                            size: 48,
+                            color: VantaraColors.primaryGreen,
+                          ),
+                          SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text("•", style: TextStyle(fontSize: 18, color: VantaraColors.textDark)),
+                              SizedBox(width: 10),
+                              Text("‿", style: TextStyle(fontSize: 16, color: VantaraColors.textDark, fontWeight: FontWeight.bold)),
+                              SizedBox(width: 10),
+                              Text("•", style: TextStyle(fontSize: 18, color: VantaraColors.textDark)),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    child: CircleAvatar(
-                      radius: 45,
-                      backgroundColor: _isListening ? Colors.redAccent : themeColor,
-                      child: Icon(
-                        _isListening ? Icons.mic : Icons.mic_none,
-                        size: 55,
-                        color: Colors.white,
-                      ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+
+              // Status / Response text
+              if (_lastResponse.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: VantaraColors.border),
+                  ),
+                  child: Text(
+                    _lastResponse,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: VantaraColors.textDark,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+
+              // "You can say things like" Title
+              Text(
+                appState.currentLanguage == 'hi-IN'
+                    ? "आप इस तरह कह सकते हैं"
+                    : "You can say things like",
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: VantaraColors.textSub,
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Suggestion Pills
+              _buildSuggestionPill(
+                icon: Icons.volume_up_rounded,
+                text: appState.currentLanguage == 'hi-IN'
+                    ? "दिमागी खेल शुरू करें"
+                    : "Start memory game",
+                onTap: () => _triggerPrompt('game'),
+              ),
+              const SizedBox(height: 10),
+              _buildSuggestionPill(
+                icon: Icons.volume_up_rounded,
+                text: appState.currentLanguage == 'hi-IN'
+                    ? "मेरा अगला रिमाइंडर क्या है?"
+                    : "What's my next reminder?",
+                onTap: () => _triggerPrompt('reminder'),
+              ),
+              const SizedBox(height: 10),
+              _buildSuggestionPill(
+                icon: Icons.volume_up_rounded,
+                text: appState.currentLanguage == 'hi-IN'
+                    ? "मुझे आज की योजना बताएं"
+                    : "Tell me today's plan",
+                onTap: () => _triggerPrompt('plan'),
+              ),
+              const SizedBox(height: 32),
+
+              // Big Green Microphone Button
+              GestureDetector(
+                onTap: _onMicTap,
+                child: AnimatedBuilder(
+                  animation: _pulseAnim,
+                  builder: (context, child) {
+                    final scale = _isListening ? _pulseAnim.value : 1.0;
+                    return Transform.scale(scale: scale, child: child);
+                  },
+                  child: Container(
+                    width: 76,
+                    height: 76,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _isListening
+                          ? const Color(0xFFE56B6F)
+                          : VantaraColors.primaryGreen,
+                      boxShadow: [
+                        BoxShadow(
+                          color: (_isListening
+                                  ? const Color(0xFFE56B6F)
+                                  : VantaraColors.primaryGreen)
+                              .withValues(alpha: 0.35),
+                          blurRadius: 20,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      _isListening ? Icons.mic_rounded : Icons.mic_none_rounded,
+                      color: Colors.white,
+                      size: 38,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
-              Center(
-                child: Text(
-                  _isListening ? "Simulating voice analysis" : "Tap to Speak",
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+              const SizedBox(height: 8),
+              Text(
+                _isListening
+                    ? (appState.currentLanguage == 'hi-IN'
+                        ? "सुन रहा हूँ..."
+                        : "Listening...")
+                    : (appState.currentLanguage == 'hi-IN'
+                        ? "बोलने के लिए माइक दबाएँ"
+                        : "Tap mic to speak"),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: VantaraColors.textSub,
                 ),
               ),
-              const SizedBox(height: 10),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWaveBar(double height) {
+    return Container(
+      width: 3.5,
+      height: height,
+      decoration: BoxDecoration(
+        color: const Color(0xFFD4C9BC),
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+
+  Widget _buildSuggestionPill({
+    required IconData icon,
+    required String text,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF3EFE0),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: VantaraColors.border, width: 1.2),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 22, color: VantaraColors.primaryGreen),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: VantaraColors.textDark,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -29,14 +29,15 @@ void main() {
       ),
     );
 
-    // Let the async state loading and initial frames settle
-    await tester.pumpAndSettle();
+    // Use pump() with duration instead of pumpAndSettle() because
+    // GradientBackground has an infinite animation that never settles
+    await tester.pump(const Duration(milliseconds: 500));
 
-    // Verify Vantara title text is displayed in the homepage header
-    expect(find.text('Vantara'), findsWidgets);
+    // Verify homepage content renders
+    expect(find.text('Amma'), findsOneWidget);
     
     // Verify bottom navigation bar has standard tabs
-    expect(find.byIcon(Icons.home), findsOneWidget);
+    expect(find.byIcon(Icons.home_rounded), findsOneWidget);
     expect(find.byIcon(Icons.sports_esports_outlined), findsOneWidget);
     expect(find.byIcon(Icons.mic_none_outlined), findsOneWidget);
     expect(find.byIcon(Icons.person_outline), findsOneWidget);

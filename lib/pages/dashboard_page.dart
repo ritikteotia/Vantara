@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
+import '../theme/glass_theme.dart';
 
 class CaregiverDashboardPage extends StatelessWidget {
   const CaregiverDashboardPage({super.key});
@@ -8,33 +9,37 @@ class CaregiverDashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    final themeColor = const Color(0xFF8D7B68);
 
     // Calculate metrics
-    final completedReminders = appState.reminders.where((r) => r.isCompleted).length;
+    final completedReminders =
+        appState.reminders.where((r) => r.isCompleted).length;
     final totalReminders = appState.reminders.length;
-    final compliancePercent = totalReminders > 0 
-        ? ((completedReminders / totalReminders) * 100).toInt() 
+    final compliancePercent = totalReminders > 0
+        ? ((completedReminders / totalReminders) * 100).toInt()
         : 0;
 
-    // Filter memory match scores for graph
     final memoryScores = appState.gameMetrics
         .where((m) => m.gameId == 'memory_match')
         .map((m) => m.accuracy)
         .toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: VantaraColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF7D5A50)),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: VantaraColors.textDark, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           "Caregiver Dashboard",
-          style: TextStyle(color: Color(0xFF7D5A50), fontWeight: FontWeight.bold, fontSize: 24),
+          style: TextStyle(
+            color: VantaraColors.textDark,
+            fontWeight: FontWeight.w800,
+            fontSize: 22,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -42,20 +47,31 @@ class CaregiverDashboardPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Patient overview card
+            // Patient overview
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE6DED4), width: 1.5),
+                border: Border.all(color: VantaraColors.border, width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
-                  const CircleAvatar(
-                    radius: 28,
-                    backgroundColor: Color(0xFFF3EFE0),
-                    child: Icon(Icons.psychology, color: Color(0xFF8D7B68), size: 35),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFFF3EEFA),
+                    ),
+                    child: const Icon(Icons.psychology_rounded,
+                        color: Color(0xFF8E7CC3), size: 30),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -63,19 +79,31 @@ class CaregiverDashboardPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          "Patient status: Moderate Stage",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF7D5A50)),
+                          "Patient: Amma (Age 72)",
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: VantaraColors.textDark,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Text("Cognitive State: ", style: TextStyle(color: Colors.grey, fontSize: 14)),
+                            const Text("Cognitive State: ",
+                                style: TextStyle(
+                                    color: VantaraColors.textSub, fontSize: 13)),
                             Text(
-                              memoryScores.isNotEmpty && memoryScores.last >= 0.80 ? "Stable / Active" : "Requires Attention",
+                              memoryScores.isNotEmpty &&
+                                      memoryScores.last >= 0.80
+                                  ? "Stable / Active"
+                                  : "Requires Attention",
                               style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: memoryScores.isNotEmpty && memoryScores.last >= 0.80 ? Colors.green : Colors.orange,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: memoryScores.isNotEmpty &&
+                                        memoryScores.last >= 0.80
+                                    ? VantaraColors.success
+                                    : VantaraColors.warning,
                               ),
                             ),
                           ],
@@ -88,37 +116,41 @@ class CaregiverDashboardPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Metrics Summary Grid
+            // Metrics grid
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
               childAspectRatio: 1.3,
               children: [
                 _buildMetricsCard(
                   "Reminders Completed",
                   "$completedReminders / $totalReminders",
                   "$compliancePercent% Compliance",
-                  Icons.alarm,
-                  Colors.green,
+                  Icons.alarm_rounded,
+                  VantaraColors.success,
                 ),
                 _buildMetricsCard(
-                  "Sync Buffer Queue",
+                  "Sync Buffer",
                   "${appState.unsyncedMetrics.length} Items",
                   appState.syncStatusMessage,
-                  Icons.sync,
-                  appState.isOnline ? Colors.blue : Colors.orange,
+                  Icons.sync_rounded,
+                  appState.isOnline ? VantaraColors.info : VantaraColors.warning,
                 ),
               ],
             ),
             const SizedBox(height: 25),
 
-            // Offline sync control panel
+            // Offline sync control
             const Text(
               "Offline-First Control Hub",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF7D5A50)),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: VantaraColors.textDark,
+              ),
             ),
             const SizedBox(height: 10),
             Container(
@@ -126,27 +158,40 @@ class CaregiverDashboardPage extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE6DED4), width: 1.5),
+                border: Border.all(color: VantaraColors.border, width: 1.2),
               ),
               child: Column(
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Simulate Connectivity", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF7D5A50))),
-                          SizedBox(height: 4),
-                          Text("Toggle internet connection state", style: TextStyle(color: Colors.grey, fontSize: 13)),
-                        ],
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Simulate Connectivity",
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: VantaraColors.textDark,
+                              ),
+                            ),
+                            SizedBox(height: 3),
+                            Text(
+                              "Toggle internet connection state",
+                              style: TextStyle(
+                                  color: VantaraColors.textSub, fontSize: 12),
+                            ),
+                          ],
+                        ),
                       ),
                       Switch(
                         value: appState.isOnline,
-                        activeColor: themeColor,
-                        onChanged: (val) {
-                          appState.setOnlineStatus(val);
-                        },
+                        activeThumbColor: VantaraColors.primaryGreen,
+                        activeTrackColor:
+                            VantaraColors.primaryGreen.withValues(alpha: 0.3),
+                        onChanged: (val) => appState.setOnlineStatus(val),
                       ),
                     ],
                   ),
@@ -154,24 +199,43 @@ class CaregiverDashboardPage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Pending Offline Data", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF7D5A50))),
-                          SizedBox(height: 4),
-                          Text("Data waiting to send to cloud", style: TextStyle(color: Colors.grey, fontSize: 13)),
-                        ],
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Pending Offline Data",
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: VantaraColors.textDark,
+                              ),
+                            ),
+                            SizedBox(height: 3),
+                            Text(
+                              "Data waiting to send to cloud",
+                              style: TextStyle(
+                                  color: VantaraColors.textSub, fontSize: 12),
+                            ),
+                          ],
+                        ),
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: themeColor,
+                          backgroundColor: VantaraColors.primaryGreen,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 0,
                         ),
-                        onPressed: appState.unsyncedMetrics.isNotEmpty && appState.isOnline
+                        onPressed: appState.unsyncedMetrics.isNotEmpty &&
+                                appState.isOnline
                             ? () => appState.triggerSync()
                             : null,
                         child: Text(
                           appState.isSyncing ? "Syncing..." : "Sync Now",
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -181,33 +245,43 @@ class CaregiverDashboardPage extends StatelessWidget {
             ),
             const SizedBox(height: 25),
 
-            // Longitudinal Performance Graph
+            // Performance graph
             const Text(
               "Cognitive Accuracy Trend (Memory Match)",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF7D5A50)),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: VantaraColors.textDark,
+              ),
             ),
             const SizedBox(height: 12),
             Container(
-              height: 200,
+              height: 190,
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE6DED4), width: 1.5),
+                border: Border.all(color: VantaraColors.border, width: 1.2),
               ),
               child: memoryScores.isEmpty
-                  ? const Center(child: Text("No game metrics recorded yet.", style: TextStyle(color: Colors.grey)))
+                  ? const Center(
+                      child: Text("No game metrics recorded yet.",
+                          style: TextStyle(color: VantaraColors.textSub)))
                   : CustomPaint(
-                      painter: LineChartPainter(scores: memoryScores),
+                      painter: CleanLineChartPainter(scores: memoryScores),
                     ),
             ),
             const SizedBox(height: 25),
 
-            // Longitudinal Log
+            // Activity log
             const Text(
               "Longitudinal Activities Log",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF7D5A50)),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: VantaraColors.textDark,
+              ),
             ),
             const SizedBox(height: 12),
             ListView.builder(
@@ -215,34 +289,75 @@ class CaregiverDashboardPage extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: appState.gameMetrics.length,
               itemBuilder: (context, idx) {
-                final metric = appState.gameMetrics[appState.gameMetrics.length - 1 - idx];
-                String gName = metric.gameId.replaceAll('_', ' ').toUpperCase();
-                
-                return Card(
-                  elevation: 0,
-                  margin: const EdgeInsets.only(bottom: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: Colors.grey.shade200),
-                  ),
-                  child: ListTile(
-                    leading: const CircleAvatar(
-                      backgroundColor: Color(0xFFF3EFE0),
-                      child: Icon(Icons.sports_esports, color: Color(0xFF8D7B68)),
+                final metric = appState
+                    .gameMetrics[appState.gameMetrics.length - 1 - idx];
+                String gName =
+                    metric.gameId.replaceAll('_', ' ').toUpperCase();
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: VantaraColors.border),
                     ),
-                    title: Text(gName, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF7D5A50))),
-                    subtitle: Text(
-                      "${metric.timestamp.toString().split('.')[0]} • Speed: ${(metric.reactionTimeMs / 1000).toStringAsFixed(1)}s",
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                    trailing: Text(
-                      "${(metric.accuracy * 100).toInt()}% Score",
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.green),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: VantaraColors.lightGreen,
+                          ),
+                          child: const Icon(
+                            Icons.sports_esports_rounded,
+                            color: VantaraColors.primaryGreen,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                gName,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: VantaraColors.textDark,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                "${metric.timestamp.toString().split('.')[0]} • Speed: ${(metric.reactionTimeMs / 1000).toStringAsFixed(1)}s",
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: VantaraColors.textSub,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          "${(metric.accuracy * 100).toInt()}%",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 17,
+                            color: metric.accuracy >= 0.8
+                                ? VantaraColors.success
+                                : VantaraColors.warning,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
               },
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -260,8 +375,8 @@ class CaregiverDashboardPage extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE6DED4), width: 1.5),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: VantaraColors.border, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,43 +385,81 @@ class CaregiverDashboardPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey)),
-              Icon(icon, color: color, size: 22),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: VantaraColors.textSub,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: color.withValues(alpha: 0.12),
+                ),
+                child: Icon(icon, color: color, size: 18),
+              ),
             ],
           ),
-          Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF7D5A50))),
-          Text(footnote, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: VantaraColors.textDark,
+            ),
+          ),
+          Text(
+            footnote,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-// Custom Painter to draw a clean line graph
-class LineChartPainter extends CustomPainter {
+// Clean Line Chart Painter
+class CleanLineChartPainter extends CustomPainter {
   final List<double> scores;
-  LineChartPainter({required this.scores});
+  CleanLineChartPainter({required this.scores});
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF8D7B68)
-      ..strokeWidth = 4.0
-      ..style = PaintingStyle.stroke;
+      ..color = VantaraColors.primaryGreen
+      ..strokeWidth = 3.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
     final fillPaint = Paint()
-      ..color = const Color(0xFF8D7B68).withOpacity(0.1)
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          VantaraColors.primaryGreen.withValues(alpha: 0.2),
+          VantaraColors.primaryGreen.withValues(alpha: 0.0),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.fill;
 
     final dotPaint = Paint()
-      ..color = const Color(0xFF7D5A50)
+      ..color = VantaraColors.primaryGreen
       ..style = PaintingStyle.fill;
 
     final gridPaint = Paint()
-      ..color = Colors.grey.shade200
+      ..color = VantaraColors.border
       ..strokeWidth = 1.0;
 
-    // Draw horizontal grids
+    // Grid lines
     for (int i = 0; i <= 4; i++) {
       double y = size.height * (i / 4);
       canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
@@ -314,13 +467,11 @@ class LineChartPainter extends CustomPainter {
 
     if (scores.isEmpty) return;
 
-    // Plot line
     final path = Path();
     final fillPath = Path();
     double stepX = size.width / (scores.length > 1 ? (scores.length - 1) : 1);
 
     for (int i = 0; i < scores.length; i++) {
-      // Y scale starts from top (0) to bottom (height). So 100% (1.0) is at y=0, 0% is at y=height.
       double x = i * stepX;
       double y = size.height * (1.0 - scores[i]);
 
@@ -342,11 +493,11 @@ class LineChartPainter extends CustomPainter {
     canvas.drawPath(fillPath, fillPaint);
     canvas.drawPath(path, paint);
 
-    // Draw dots and score values
+    // Draw Dots
     for (int i = 0; i < scores.length; i++) {
       double x = i * stepX;
       double y = size.height * (1.0 - scores[i]);
-      canvas.drawCircle(Offset(x, y), 5.0, dotPaint);
+      canvas.drawCircle(Offset(x, y), 4.5, dotPaint);
     }
   }
 

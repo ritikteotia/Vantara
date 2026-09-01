@@ -6,10 +6,11 @@ import 'pages/games_page.dart';
 import 'pages/assistant_page.dart';
 import 'pages/profile_page.dart';
 import 'services/tts_service.dart';
+import 'theme/glass_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize TTS early
   final tts = TtsService();
   await tts.init();
@@ -32,17 +33,31 @@ class VantaraApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF8D7B68), // Warm brown/beige
-          background: const Color(0xFFFAF7F2), // Light warm cream background
-          primary: const Color(0xFF8D7B68),
-          secondary: const Color(0xFF7D5A50),
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: VantaraColors.background,
+        colorScheme: ColorScheme.light(
+          surface: VantaraColors.background,
+          primary: VantaraColors.primaryGreen,
+          secondary: VantaraColors.accentGreen,
+          onSurface: VantaraColors.textDark,
         ),
-        // Elder-friendly global text styling (larger body sizes)
+        // Elder-friendly global text styling (clear, high readability)
         textTheme: const TextTheme(
-          bodyLarge: TextStyle(fontSize: 20, color: Color(0xFF5D4037), height: 1.4),
-          bodyMedium: TextStyle(fontSize: 18, color: Color(0xFF5D4037), height: 1.4),
-          titleLarge: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF5D4037)),
+          bodyLarge: TextStyle(
+            fontSize: 20,
+            color: VantaraColors.textDark,
+            height: 1.4,
+          ),
+          bodyMedium: TextStyle(
+            fontSize: 18,
+            color: VantaraColors.textDark,
+            height: 1.4,
+          ),
+          titleLarge: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: VantaraColors.textDark,
+          ),
         ),
       ),
       home: const MainShell(),
@@ -72,74 +87,46 @@ class _MainShellState extends State<MainShell> {
     final appState = Provider.of<AppState>(context);
 
     return Scaffold(
-      body: _pages[_currentIndex],
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(color: Colors.grey.shade200, width: 1.5),
-          ),
+      backgroundColor: VantaraColors.background,
+      extendBody: true, // Enables true floating effect over content
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 280),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        child: KeyedSubtree(
+          key: ValueKey<int>(_currentIndex),
+          child: _pages[_currentIndex],
         ),
-        child: NavigationBarTheme(
-          data: NavigationBarThemeData(
-            backgroundColor: Colors.white,
-            indicatorColor: const Color(0xFF8D7B68).withOpacity(0.15),
-            labelTextStyle: MaterialStateProperty.resolveWith((states) {
-              if (states.contains(MaterialState.selected)) {
-                return const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF7D5A50),
-                );
-              }
-              return const TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              );
-            }),
-            iconTheme: MaterialStateProperty.resolveWith((states) {
-              if (states.contains(MaterialState.selected)) {
-                return const IconThemeData(
-                  size: 32,
-                  color: Color(0xFF7D5A50),
-                );
-              }
-              return const IconThemeData(
-                size: 28,
-                color: Colors.grey,
-              );
-            }),
+      ),
+      bottomNavigationBar: FloatingNavBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        items: [
+          FloatingNavItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home_rounded,
+            label: appState.translate('home'),
           ),
-          child: NavigationBar(
-            selectedIndex: _currentIndex,
-            onDestinationSelected: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            destinations: [
-              NavigationDestination(
-                icon: const Icon(Icons.home_outlined),
-                selectedIcon: const Icon(Icons.home),
-                label: appState.translate('home'),
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.sports_esports_outlined),
-                selectedIcon: const Icon(Icons.sports_esports),
-                label: appState.translate('games'),
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.mic_none_outlined),
-                selectedIcon: const Icon(Icons.mic),
-                label: appState.translate('assistant'),
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.person_outline),
-                selectedIcon: const Icon(Icons.person),
-                label: appState.translate('profile'),
-              ),
-            ],
+          FloatingNavItem(
+            icon: Icons.sports_esports_outlined,
+            activeIcon: Icons.sports_esports_rounded,
+            label: appState.translate('games'),
           ),
-        ),
+          FloatingNavItem(
+            icon: Icons.mic_none_outlined,
+            activeIcon: Icons.mic_rounded,
+            label: appState.translate('assistant'),
+          ),
+          FloatingNavItem(
+            icon: Icons.person_outline,
+            activeIcon: Icons.person_rounded,
+            label: appState.translate('profile'),
+          ),
+        ],
       ),
     );
   }

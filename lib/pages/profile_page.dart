@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
+import '../theme/glass_theme.dart';
 import 'dashboard_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -18,11 +19,15 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: const Color(0xFFFFF9F5),
+        backgroundColor: Colors.white,
         title: const Center(
           child: Text(
             "Caregiver Verification",
-            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF7D5A50)),
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 20,
+              color: VantaraColors.textDark,
+            ),
           ),
         ),
         content: Column(
@@ -31,7 +36,7 @@ class _ProfilePageState extends State<ProfilePage> {
             const Text(
               "Please enter the 4-digit caregiver security PIN to open dashboard.",
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 16),
+              style: TextStyle(color: VantaraColors.textSub, fontSize: 14),
             ),
             const SizedBox(height: 20),
             TextField(
@@ -40,11 +45,29 @@ class _ProfilePageState extends State<ProfilePage> {
               obscureText: true,
               maxLength: 4,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 32, letterSpacing: 10, fontWeight: FontWeight.bold),
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
+              style: const TextStyle(
+                fontSize: 28,
+                letterSpacing: 10,
+                fontWeight: FontWeight.bold,
+                color: VantaraColors.textDark,
+              ),
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: VantaraColors.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: VantaraColors.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: VantaraColors.primaryGreen, width: 2),
+                ),
                 counterText: "",
                 hintText: "••••",
+                filled: true,
+                fillColor: VantaraColors.background,
               ),
             ),
           ],
@@ -56,35 +79,114 @@ class _ProfilePageState extends State<ProfilePage> {
               Expanded(
                 child: TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text("Cancel", style: TextStyle(fontSize: 18, color: Colors.grey)),
+                  child: const Text(
+                    "Cancel",
+                    style: TextStyle(fontSize: 16, color: VantaraColors.textSub),
+                  ),
                 ),
               ),
               Expanded(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8D7B68),
+                    backgroundColor: VantaraColors.primaryGreen,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
                   ),
                   onPressed: () {
                     if (_pinController.text == "1234") {
                       _pinController.clear();
                       Navigator.of(ctx).pop();
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const CaregiverDashboardPage()),
+                        MaterialPageRoute(
+                          builder: (_) => const CaregiverDashboardPage(),
+                        ),
                       );
                     } else {
-                      // Trigger error speech/dialog
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Incorrect PIN. Please try again.")),
+                        SnackBar(
+                          content: const Text("Incorrect PIN. Default is 1234."),
+                          backgroundColor: VantaraColors.error,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       );
                     }
                   },
-                  child: const Text("Enter", style: TextStyle(fontSize: 18, color: Colors.white)),
+                  child: const Text(
+                    "Enter",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
             ],
           )
         ],
       ),
+    );
+  }
+
+  void _showLanguagePicker(BuildContext context, AppState appState) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      backgroundColor: Colors.white,
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Select Voice & Language",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: VantaraColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildLangTile(ctx, appState, 'English', 'en-US', '🇺🇸'),
+              _buildLangTile(ctx, appState, 'हिन्दी (Hindi)', 'hi-IN', '🇮🇳'),
+              _buildLangTile(ctx, appState, 'অসমীয়া (Assamese)', 'as-IN', '🌾'),
+              _buildLangTile(ctx, appState, 'মনিপুরী (Manipuri)', 'mni-IN', '🏔️'),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLangTile(
+      BuildContext ctx, AppState appState, String title, String code, String flag) {
+    final isSelected = appState.currentLanguage == code;
+    return ListTile(
+      leading: Text(flag, style: const TextStyle(fontSize: 24)),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? VantaraColors.primaryGreen : VantaraColors.textDark,
+        ),
+      ),
+      trailing: isSelected
+          ? const Icon(Icons.check_circle_rounded, color: VantaraColors.primaryGreen)
+          : null,
+      onTap: () {
+        appState.changeLanguage(code);
+        Navigator.of(ctx).pop();
+      },
     );
   }
 
@@ -97,159 +199,251 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    final themeColor = const Color(0xFF8D7B68);
+
+    String langName = "English";
+    if (appState.currentLanguage == 'hi-IN') langName = "Hindi";
+    if (appState.currentLanguage == 'as-IN') langName = "Assamese";
+    if (appState.currentLanguage == 'mni-IN') langName = "Manipuri";
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: VantaraColors.background,
       body: SafeArea(
+        bottom: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header
               Text(
                 appState.translate('profile'),
                 style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF7D5A50),
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: VantaraColors.textDark,
+                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 6),
-              const Text(
-                "Personal settings and language packs selection.",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 25),
+              const SizedBox(height: 20),
 
               // Patient Bio Card
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: const Color(0xFFE6DED4), width: 1.5),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: VantaraColors.border, width: 1.2),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.02),
+                      color: Colors.black.withValues(alpha: 0.02),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
-                    )
+                    ),
                   ],
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Color(0xFFF3EFE0),
-                      child: Icon(Icons.person, size: 50, color: Color(0xFF8D7B68)),
+                    // Amma avatar
+                    Container(
+                      width: 68,
+                      height: 68,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFF3EFE0),
+                        border: Border.all(
+                          color: VantaraColors.primaryGreen.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.face_3_rounded,
+                          size: 44,
+                          color: Color(0xFF8D7B68),
+                        ),
+                      ),
                     ),
-                    SizedBox(width: 20),
+                    const SizedBox(width: 18),
+                    // Details
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            "Devi Prasad",
+                          const Text(
+                            "Amma",
                             style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF7D5A50),
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: VantaraColors.textDark,
                             ),
                           ),
-                          SizedBox(height: 6),
-                          Text("Age: 72", style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.bold)),
-                          Text("Guwahati, Assam, India", style: TextStyle(fontSize: 14, color: Colors.grey)),
+                          const SizedBox(height: 3),
+                          const Text(
+                            "Age: 72",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: VantaraColors.textSub,
+                            ),
+                          ),
+                          Text(
+                            "Language: $langName",
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: VantaraColors.textSub,
+                            ),
+                          ),
                         ],
                       ),
                     ),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: VantaraColors.textGrey,
+                      size: 28,
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
 
-              // Language Packs selector
-              const Text(
-                "Language Selection (TTS Voice Support)",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF7D5A50),
-                ),
-              ),
-              const SizedBox(height: 12),
-              
-              // Language packs buttons grid
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 2.2,
-                children: [
-                  _buildLanguageButton(context, appState, 'English', 'en-US', '🇺🇸'),
-                  _buildLanguageButton(context, appState, 'हिन्दी (Hindi)', 'hi-IN', '🇮🇳'),
-                  _buildLanguageButton(context, appState, 'অসমীয়া (Assamese)', 'as-IN', '🌾'),
-                  _buildLanguageButton(context, appState, 'মনিপুরী (Manipuri)', 'mni-IN', '🏔️'),
-                ],
-              ),
-
-              const SizedBox(height: 40),
-
-              // Caregiver Entrance
+              // Option list items
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3EFE0).withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: const Color(0xFFE6DED4)),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: VantaraColors.border, width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
-                    const Icon(Icons.security, size: 50, color: Color(0xFF8D7B68)),
-                    const SizedBox(height: 12),
-                    const Text(
-                      "Caregivers & Doctors Section",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF7D5A50),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      "Monitor longitudinal stats and edit schedule settings.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: themeColor,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        onPressed: () => _verifyCaregiverPin(context),
-                        icon: const Icon(Icons.dashboard, color: Colors.white),
-                        label: Text(
-                          appState.translate('caregiver_title'),
-                          style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+                    _buildSettingsItem(
+                      icon: Icons.insights_rounded,
+                      iconColor: const Color(0xFF4EA8DE),
+                      title: "My Progress",
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const CaregiverDashboardPage(),
                         ),
                       ),
-                    )
+                    ),
+                    _buildDivider(),
+                    _buildSettingsItem(
+                      icon: Icons.notifications_none_rounded,
+                      iconColor: const Color(0xFFF4A261),
+                      title: "Reminders Settings",
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("All 4 daily reminders are active."),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildDivider(),
+                    _buildSettingsItem(
+                      icon: Icons.security_rounded,
+                      iconColor: VantaraColors.primaryGreen,
+                      title: "Caregiver Access",
+                      onTap: () => _verifyCaregiverPin(context),
+                    ),
+                    _buildDivider(),
+                    _buildSettingsItem(
+                      icon: Icons.translate_rounded,
+                      iconColor: const Color(0xFF8E7CC3),
+                      title: "Language: $langName",
+                      onTap: () => _showLanguagePicker(context, appState),
+                    ),
+                    _buildDivider(),
+                    _buildSettingsItem(
+                      icon: Icons.help_outline_rounded,
+                      iconColor: const Color(0xFFE56B6F),
+                      title: "Help & Support",
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20)),
+                            title: const Text("Help & Support"),
+                            content: const Text(
+                              "Vantara is your AI cognitive companion designed to assist memory recall, daily orientation, and medication reminders.",
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(),
+                                child: const Text("OK"),
+                              )
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    _buildDivider(),
+                    _buildSettingsItem(
+                      icon: Icons.info_outline_rounded,
+                      iconColor: Colors.grey,
+                      title: "About Vantara",
+                      onTap: () {
+                        showAboutDialog(
+                          context: context,
+                          applicationName: "Vantara",
+                          applicationVersion: "1.0.0",
+                          applicationLegalese: "AI Cognitive Assistance for Dementia Care",
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 24),
+
+              // Logout / Reset button
+              GestureDetector(
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Session active. Everything is up to date."),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFDE8E9).withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFFE56B6F).withValues(alpha: 0.4),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.logout_rounded, color: Color(0xFFE56B6F), size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        "Logout",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFE56B6F),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -257,45 +451,49 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildLanguageButton(
-    BuildContext context,
-    AppState appState,
-    String name,
-    String code,
-    String flag,
-  ) {
-    final isSelected = appState.currentLanguage == code;
-
-    return OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        backgroundColor: isSelected ? const Color(0xFF8D7B68) : Colors.white,
-        side: BorderSide(
-          color: isSelected ? const Color(0xFF8D7B68) : const Color(0xFFE6DED4),
-          width: 2,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
-      ),
-      onPressed: () => appState.changeLanguage(code),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(flag, style: const TextStyle(fontSize: 22)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              name,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : const Color(0xFF7D5A50),
+  Widget _buildSettingsItem({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Icon(icon, color: iconColor, size: 22),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: VantaraColors.textDark,
+                ),
               ),
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: VantaraColors.textGrey,
+              size: 24,
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return const Divider(
+      height: 1,
+      thickness: 1,
+      indent: 20,
+      endIndent: 20,
+      color: VantaraColors.borderLight,
     );
   }
 }

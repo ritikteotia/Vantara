@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
+import '../theme/glass_theme.dart';
 import '../games/memory_match.dart';
 import '../games/sequence_recall.dart';
 import '../games/what_changed.dart';
@@ -14,114 +15,142 @@ class GamesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
 
-    // List of games config
     final List<Map<String, dynamic>> gamesList = [
       {
         'id': 'memory_match',
         'title': appState.translate('memory_match'),
-        'desc': 'Remember and match familiar regional objects.',
-        'icon': Icons.grid_view_rounded,
-        'color': Colors.orange.shade700,
+        'desc': 'Remember and match objects',
+        'icon': Icons.psychology_rounded,
+        'iconColor': const Color(0xFF8E7CC3),
+        'bgColor': const Color(0xFFF3EEFA),
         'widget': const MemoryMatchGame(),
         'focus': 'Short-term Memory'
       },
       {
         'id': 'sequence_recall',
         'title': appState.translate('sequence_recall'),
-        'desc': 'Repeat sequences of sounds, colors, and patterns.',
-        'icon': Icons.repeat_on_rounded,
-        'color': Colors.red.shade700,
+        'desc': 'Remember the correct sequence',
+        'icon': Icons.motion_photos_on_rounded,
+        'iconColor': const Color(0xFF4E7A51),
+        'bgColor': const Color(0xFFE8F1E7),
         'widget': const SequenceRecallGame(),
         'focus': 'Attention & Memory'
       },
       {
         'id': 'what_changed',
         'title': appState.translate('what_changed'),
-        'desc': 'Spot the subtle differences on a traditional shelf.',
-        'icon': Icons.psychology_rounded,
-        'color': Colors.indigo.shade700,
+        'desc': 'Find the changes in the scene',
+        'icon': Icons.landscape_rounded,
+        'iconColor': const Color(0xFFF4A261),
+        'bgColor': const Color(0xFFFEF3EA),
         'widget': const WhatChangedGame(),
         'focus': 'Visual Recall'
       },
       {
         'id': 'object_recognition',
         'title': appState.translate('object_recognition'),
-        'desc': 'Identify regional items from multiple options.',
-        'icon': Icons.image_search_rounded,
-        'color': Colors.teal.shade700,
+        'desc': 'Identify the correct object',
+        'icon': Icons.apple_rounded,
+        'iconColor': const Color(0xFFE56B6F),
+        'bgColor': const Color(0xFFFDE8E9),
         'widget': const ObjectRecognitionGame(),
         'focus': 'Semantic Memory'
       },
       {
         'id': 'routine_recall',
         'title': appState.translate('routine_recall'),
-        'desc': 'Answer questions about your scheduled daily routines.',
-        'icon': Icons.assignment_turned_in_rounded,
-        'color': Colors.brown.shade700,
+        'desc': 'Answer questions about your daily routine',
+        'icon': Icons.calendar_month_rounded,
+        'iconColor': const Color(0xFF4EA8DE),
+        'bgColor': const Color(0xFFE7F3FB),
         'widget': const RoutineRecallGame(),
         'focus': 'Orientation to Daily Life'
       },
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F2),
+      backgroundColor: VantaraColors.background,
       body: SafeArea(
+        bottom: false,
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header
               Text(
                 appState.translate('games'),
                 style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF7D5A50),
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: VantaraColors.textDark,
+                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 6),
-              const Text(
-                "Keep your mind active and trained with daily challenges.",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(height: 2),
+              Text(
+                appState.currentLanguage == 'hi-IN'
+                    ? "खेलने के लिए एक खेल चुनें"
+                    : "Choose a game to play",
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: VantaraColors.textSub,
                 ),
               ),
               const SizedBox(height: 20),
-              
-              // List of games cards
+
+              // Game cards list
               Expanded(
                 child: ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 110),
                   itemCount: gamesList.length,
                   itemBuilder: (context, index) {
                     final game = gamesList[index];
                     final currentLvl = appState.gameDifficulties[game['id']] ?? 1;
 
-                    return Card(
-                      elevation: 0,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        side: const BorderSide(color: Color(0xFFE6DED4), width: 1.5),
-                      ),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(24),
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: GestureDetector(
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => game['widget']),
                           );
                         },
-                        child: Padding(
-                          padding: const EdgeInsets.all(20.0),
+                        child: Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: VantaraColors.border, width: 1.2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.02),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
                           child: Row(
                             children: [
-                              CircleAvatar(
-                                radius: 30,
-                                backgroundColor: game['color'].withOpacity(0.1),
-                                child: Icon(game['icon'], size: 36, color: game['color']),
+                              // Icon Squircle Container
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: game['bgColor'] as Color,
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    game['icon'] as IconData,
+                                    size: 32,
+                                    color: game['iconColor'] as Color,
+                                  ),
+                                ),
                               ),
-                              const SizedBox(width: 20),
+                              const SizedBox(width: 16),
+                              // Title & Description
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,46 +161,47 @@ class GamesPage extends StatelessWidget {
                                           child: Text(
                                             game['title'],
                                             style: const TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF7D5A50),
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.w800,
+                                              color: VantaraColors.textDark,
                                             ),
                                           ),
                                         ),
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 3),
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFFFAF7F2),
-                                            borderRadius: BorderRadius.circular(10),
-                                            border: Border.all(color: const Color(0xFFE6DED4)),
+                                            color: VantaraColors.background,
+                                            borderRadius: BorderRadius.circular(8),
                                           ),
                                           child: Text(
                                             'Lvl $currentLvl',
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF7D5A50),
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              color: game['iconColor'] as Color,
                                             ),
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 6),
+                                    const SizedBox(height: 4),
                                     Text(
                                       game['desc'],
-                                      style: TextStyle(fontSize: 15, color: Colors.grey.shade600, height: 1.3),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Target: ${game['focus']}',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: game['color'],
+                                        fontWeight: FontWeight.w500,
+                                        color: VantaraColors.textSub,
                                       ),
                                     ),
                                   ],
                                 ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(
+                                Icons.chevron_right_rounded,
+                                color: VantaraColors.textGrey,
+                                size: 28,
                               ),
                             ],
                           ),
